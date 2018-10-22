@@ -9,40 +9,36 @@ import os
 # declare variables
 port = int(sys.argv[1])
 if len(sys.argv) > 2:
-    if sys.argv[2] == '-v':
-        verbose = True
-    else:
-        verbose = False
+    verbose = True if sys.argv[2] == '-v' else False
 else:
     verbose = False
 
 # declare functions
 def recvWriteFile(filename, conn, size):
     with open(filename, "wb") as f:
-        dataLeft = size
-        while dataLeft > 0:
-            data = conn.recv(min(1024, dataLeft))
-            dataLeft -= len(data)
-            if (dataLeft < 1024):
+        dataRemaining = size
+        while dataRemaining > 0:
+            data = conn.recv(min(1024, dataRemaining))
+            if (dataRemaining == len(data)):
                 f.write(data)
                 conn.send("DONE".encode())
+                dataRemaining = 0
             else:
                 f.write(data)
-                dataLeft -= len(data)
+                dataRemaining -= len(data)
 
 def readSendFile(filename, conn, size):
     with open(filename, "rb") as f:
-        dataLeft = size
-        while dataLeft > 0:
-            data = f.read(min(1024, dataLeft))
-            dataLeft -= len(data)
-            if (dataLeft < 1024):
+        dataRemaining = size
+        while dataRemaining > 0:
+            data = f.read(min(1024, dataRemaining))
+            dataRemaining -= len(data)
+            if (dataRemaining == 0):
                 conn.send(data)
                 conn.send("DONE".encode())
-                dataLeft = 0
+                break
             else:
                 conn.send(data)
-                dataLeft -= len(data)
 
 # open socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

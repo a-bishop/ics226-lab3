@@ -16,38 +16,35 @@ filename = sys.argv[4]
 # declare functions
 def recvWriteFile(filename, s, size):
     with open(filename, "wb") as f:
-        dataLeft = size
-        while dataLeft > 0:
-            data = s.recv(min(1024, dataLeft))
-            dataLeft -= len(data)
-            if (dataLeft < 1024):
-                print("here")
+        dataRemaining = size
+        while dataRemaining > 0:
+            data = s.recv(min(1024, dataRemaining))
+            if (dataRemaining == len(data)):
                 f.write(data)
                 end = s.recv(1024).decode("utf-8")
                 if end == "DONE":
                     print("Complete")
-                    dataLeft = 0
+                    dataRemaining = 0
                     s.close()
             else:
-                print("heare")
                 f.write(data)
-                dataLeft -= len(data)
+                dataRemaining -= len(data)
 
 def readSendFile(filename, s, size):
     with open(filename, "rb") as f:
-        dataLeft = size
-        while dataLeft > 0:
-            data = f.read(min(1024, dataLeft))
-            dataLeft -= len(data)
-            if (dataLeft < 1024):
+        dataRemaining = size
+        while dataRemaining > 0:
+            data = f.read(min(1024, dataRemaining))
+            dataRemaining -= len(data)
+            if (dataRemaining == 0):
                 s.send(data)
                 end = s.recv(1024).decode("utf-8")
                 if end == "DONE":
                     print("Complete")
-                dataLeft -= len(data)
+                    dataRemaining = 0
+                    s.close()
             else:
                 s.send(data)
-                dataLeft -= len(data)
 
 # create an INET, STREAMing socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -98,6 +95,7 @@ if data == 'READY':
                 # receive OK from server
                 response = s.recv(1024).decode()
                 if response == 'OK':
+                    print('client sending file %s (%d bytes)' % (filename, size))
                     readSendFile(filename, s, size)
             else:
                 response = response[7:]
