@@ -63,14 +63,14 @@ while True:
     data = data.split(' ')
     request = data[0]
     filename = data[1]
-    filepath = './' + filename
+    filepath = './'
 
     ### ---- handle GET requests ----- ###
     if request == 'GET':
         if verbose:
             print('server receiving request: ' + request)
         # check if file requested is on server
-        if os.path.isfile(filepath) == True:
+        if os.path.isfile(filename) == True:
             conn.send('OK'.encode())
             response = conn.recv(1024).decode()
             if response == 'READY':
@@ -85,21 +85,24 @@ while True:
         else:
             msg = 'ERROR: file %s does not exist' % filename
             conn.send(msg.encode())
-        #send OK
             
     ### --- Handle PUT Requests --- ###
     elif request == 'PUT':
         if verbose:
             print('server receiving request: ' + request)
-        conn.send('OK'.encode())
         # check if OS can create file (permissions, etc)
-        # receive number of bytes
-        size = int.from_bytes(conn.recv(8), byteorder='big', signed=False)
-        if verbose:
-            print('server receiving %d bytes' % size)
-        conn.send('OK'.encode())
-        # receive bytes in 1024 blocks
-        recvWriteFile(filename, conn, size)
+        if os.access(filepath, os.X_OK):
+            conn.send('OK'.encode())
+            # receive number of bytes
+            size = int.from_bytes(conn.recv(8), byteorder='big', signed=False)
+            if verbose:
+                print('server receiving %d bytes' % size)
+            conn.send('OK'.encode())
+            # receive bytes in 1024 blocks
+            recvWriteFile(filename, conn, size)
+        else:
+            msg = 'ERROR: unable to create file %s' % filename
+            conn.send(msg.encode())
         
 
     ### --- Handle DEL Requests --- ###
