@@ -55,9 +55,10 @@ except Exception as e:
 	print('\nSomething has gone wrong with host %s. Exception is %s ' % (server, e))
 
 # wait for READY from server
+print("connected")
 data = s.recv(1024).decode()
 if data == 'READY':
-
+    print("get here")
     ### ---- handle GET requests ----- ###
     if command == 'GET':
         try:
